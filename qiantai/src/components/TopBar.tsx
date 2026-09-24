@@ -1,3 +1,8 @@
+/**
+ * 顶部导航栏
+ *
+ * 提供平台品牌展示、主导航切换、用户信息和退出入口。
+ */
 type TopBarProps = {
   city?: string
   view?: 'square' | 'demands' | 'offers' | 'credit'

@@ -1,3 +1,8 @@
+/**
+ * 需求详情面板
+ *
+ * 负责展示单条需求的详细信息、报价列表，以及买家/卖家针对当前需求的操作入口。
+ */
 import { useState } from 'react'
 import type { DemandDetail as DemandDetailType } from '../types/demand'
 
@@ -72,11 +77,11 @@ export function DemandDetail({ detail, loading = false, currentUserId, onSelectO
       <div className="offer-card">
         <div className="offer-title-row">
           <h3>报价列表</h3>
-          <span>{detail.offers.length} 条</span>
+          <span>已有 {detail.offerCount} 人报价</span>
         </div>
 
         {detail.offers.length === 0 ? (
-          <div className="empty-box">暂无报价</div>
+          <div className="empty-box">{detail.offerCount > 0 ? '报价信息仅对需求发布者可见' : '暂无报价'}</div>
         ) : (
           detail.offers.map((offer) => (
             <div className="offer-item" key={offer.id}>

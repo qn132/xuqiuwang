@@ -1,3 +1,8 @@
+/**
+ * 分类筛选栏
+ *
+ * 通过点击分类筛选需求列表，方便用户快速筛选同类需求。
+ */
 type FilterBarProps = {
   categories: string[]
   selectedCategory: string

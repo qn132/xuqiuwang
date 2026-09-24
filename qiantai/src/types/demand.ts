@@ -29,6 +29,7 @@ export type DemandItem = {
   status: DemandStatus
   createAt: string
   expireTime: string
+  offerCount: number
   user: UserSummary
 }
 

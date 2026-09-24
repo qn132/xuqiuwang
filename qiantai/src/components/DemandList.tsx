@@ -1,3 +1,8 @@
+/**
+ * 需求列表组件
+ *
+ * 作用：把需求广场中的需求卡片按状态和信息展示出来，并支持点击选中一条需求查看详情。
+ */
 import type { DemandItem } from '../types/demand'
 
 type DemandListProps = {
@@ -48,6 +53,7 @@ export function DemandList({ items, selectedId, onSelect }: DemandListProps) {
 
           <div className="user-line">
             <strong>{item.user.name}</strong>
+            <span>已有 {item.offerCount} 人报价</span>
             <span>成交 {item.user.deals}</span>
             <span>爽约 {item.user.noShow}</span>
             <span>投诉 {item.user.complaints}</span>

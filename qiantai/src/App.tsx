@@ -1,3 +1,11 @@
+/**
+ * 需求购前端入口
+ *
+ * 功能概览：
+ * - 处理用户登录与退出
+ * - 展示需求广场、我的需求、我的报价、信用档案等页面
+ * - 调用后端接口实现需求创建、报价、选中报价与信用记录提交
+ */
 import { useEffect, useState } from 'react'
 import { cancelDemand, createDemand, createOffer, getCreditRecords, getDemandDetail, getDemandList, getMyDemands, getMyOffers, getStats, login, reportCredit, selectOffer } from './api/requestApi'
 import type { DemandDetail as DemandDetailType, DemandItem } from './types/demand'
@@ -11,10 +19,10 @@ type View = 'square' | 'demands' | 'offers' | 'credit'
 type User = { id: number; phone: string; nickname: string; avatar: string; credit_score: number }
 
 function App() {
-  const [user, setUser] = useState<User | null>(() => JSON.parse(localStorage.getItem('qiugouwang_user') || 'null'))
+  const [user, setUser] = useState<User | null>(() => JSON.parse(sessionStorage.getItem('qiugouwang_user') || 'null'))
   const [view, setView] = useState<View>('square')
   const [phone, setPhone] = useState('13800002917')
-  const [loginOpen, setLoginOpen] = useState(!localStorage.getItem('qiugouwang_token'))
+  const [loginOpen, setLoginOpen] = useState(!sessionStorage.getItem('qiugouwang_token'))
   const [publishOpen, setPublishOpen] = useState(false)
   const [category, setCategory] = useState('全部')
   const [items, setItems] = useState<DemandItem[]>([])
@@ -50,8 +58,8 @@ function App() {
   const doLogin = async () => {
     try {
       const result = await login(phone)
-      localStorage.setItem('qiugouwang_token', result.token)
-      localStorage.setItem('qiugouwang_user', JSON.stringify(result.userInfo))
+      sessionStorage.setItem('qiugouwang_token', result.token)
+      sessionStorage.setItem('qiugouwang_user', JSON.stringify(result.userInfo))
       setUser(result.userInfo)
       setLoginOpen(false)
       setMessage('登录成功')
@@ -82,7 +90,7 @@ function App() {
   )
 
   return <div className="page-shell">
-    <TopBar city="北京" view={view} user={user} onViewChange={changeView} onLogin={() => { localStorage.clear(); setUser(null); setLoginOpen(true) }} />
+    <TopBar city="北京" view={view} user={user} onViewChange={changeView} onLogin={() => { sessionStorage.clear(); setUser(null); setLoginOpen(true) }} />
     {message && <div className="toast" onClick={() => setMessage('')}>{message}</div>}
     {view === 'square' && <main className="content-grid">
       <section className="left-panel">
@@ -90,7 +98,7 @@ function App() {
         <FilterBar categories={categories} selectedCategory={category} onSelect={setCategory} />
         {loading ? <div className="loading-box">正在加载需求数据...</div> : <DemandList items={category === '全部' ? items : items.filter((item) => item.category === category)} selectedId={selectedId} onSelect={setSelectedId} />}
       </section>
-      <aside className="right-panel"><DemandDetail detail={detail} loading={!detail && loading} currentUserId={user.id} onSelectOffer={async (offerId) => { await selectOffer(detail!.id, offerId); setMessage('已选中报价'); setDetail(await getDemandDetail(detail!.id)); }} onCancelDemand={async () => { if (!window.confirm('确定取消这条需求吗？')) return; await cancelDemand(detail!.id); setMessage('需求已取消'); await refreshSquare(); setDetail(await getDemandDetail(detail!.id)); }} onCreateOffer={async (form) => { await createOffer(form); setMessage('报价成功'); setDetail(await getDemandDetail(form.demandId)) }} onReportCredit={async (resultType) => { const description = resultType === 1 ? '按约定地点完成交易，商品符合描述' : resultType === 2 ? '买家未按约定时间地点到场' : '供应者未按约定提供商品或完成交易'; await reportCredit(detail!.id, resultType, description); setMessage('信用记录已保存'); setStats(await getStats()); setDetail(await getDemandDetail(detail!.id)); }} /></aside>
+      <aside className="right-panel"><DemandDetail detail={detail} loading={!detail && loading} currentUserId={user.id} onSelectOffer={async (offerId) => { await selectOffer(detail!.id, offerId); setMessage('已选中报价'); setDetail(await getDemandDetail(detail!.id)); }} onCancelDemand={async () => { if (!window.confirm('确定取消这条需求吗？')) return; await cancelDemand(detail!.id); setMessage('需求已取消'); await refreshSquare(); setDetail(await getDemandDetail(detail!.id)); }} onCreateOffer={async (form) => { await createOffer(form); setMessage('报价成功'); setDetail(await getDemandDetail(form.demandId)) }} onReportCredit={async (resultType) => { const description = resultType === 1 ? '按约定地点完成交易，商品符合描述' : resultType === 2 ? '买家未按约定时间地点到场' : '供应者未按约定提供商品或完成交易'; const result = await reportCredit(detail!.id, resultType, description); setMessage(result.completed ? '双方已确认，交易完成' : '已确认，等待另一方确认'); setStats(await getStats()); setDetail(await getDemandDetail(detail!.id)); }} /></aside>
     </main>}
     {view === 'offers' && <section className="workspace-section"><div className="section-heading"><div><p className="eyebrow">供应者工作台</p><h1>我的报价</h1></div><button className="secondary-btn" onClick={() => changeView('square')}>回到需求广场</button></div>{offers.length === 0 ? <div className="empty-box">还没有报价，去广场看看附近的需求。</div> : <div className="data-list">{offers.map((offer) => <article className="data-row clickable-row" key={offer.id} onClick={() => { setSelectedId(offer.demandId); changeView('square') }}><div><strong>{offer.title}</strong><p>{offer.remark || '未填写备注'}</p><small>点击查看订单详情</small></div><b>¥{offer.offerPrice}</b><span className={`state ${offer.status === 2 || offer.status === 1 && offer.isSelected ? 'open' : 'pending'}`}>{offer.status === 2 ? '已完成' : offer.status === 1 && offer.isSelected ? '已选中' : offer.status === 3 ? '已取消' : offer.status === 4 ? '已过期' : '等待回复'}</span></article>)}</div>}</section>}
     {view === 'demands' && <section className="workspace-section"><div className="section-heading"><div><p className="eyebrow">买家工作台</p><h1>我的需求</h1></div><button className="primary-btn" onClick={() => setPublishOpen(true)}>发布新需求</button></div>{myDemands.length === 0 ? <div className="empty-box">还没有发布需求。</div> : <div className="data-list">{myDemands.map((item) => <article className="data-row" key={item.id} onClick={() => { setSelectedId(item.id); changeView('square') }}><div><strong>{item.title}</strong><p>{item.tradeLocation} · {item.tradeTime || '时间待定'}</p></div><span className={`state ${item.status === 0 ? 'open' : 'pending'}`}>{item.status === 0 ? '等待报价' : item.status === 1 ? '已选供应' : item.status === 2 ? '已完成' : '已关闭'}</span></article>)}</div>}</section>}

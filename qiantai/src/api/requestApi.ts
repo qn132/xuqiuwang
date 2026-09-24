@@ -1,3 +1,11 @@
+/**
+ * 前端 API 封装层
+ *
+ * 作用：
+ * - 统一管理所有后端接口请求
+ * - 自动带上 Authorization 头
+ * - 规范返回结构与字段转换
+ */
 export type DemandStatus = 0 | 1 | 2 | 3 | 4
 
 export type UserSummary = {
@@ -29,6 +37,7 @@ export type DemandItem = {
   status: DemandStatus
   createAt: string
   expireTime: string
+  offerCount: number
   user: UserSummary
 }
 
@@ -45,8 +54,14 @@ type ApiEnvelope<T> = {
   data?: T
 }
 
-const getToken = () => localStorage.getItem('qiugouwang_token') ?? ''
+const getToken = () => sessionStorage.getItem('qiugouwang_token') ?? ''
 
+/**
+ * 通用 HTTP 请求封装
+ * 1. 自动注入 token
+ * 2. 自动解析 JSON
+ * 3. 统一处理非 200 / code != 200 的失败情况
+ */
 async function request<T>(url: string, options: RequestInit = {}) {
   const headers = new Headers(options.headers)
   headers.set('Accept', 'application/json')
@@ -86,7 +101,7 @@ export async function cancelDemand(demandId: number) {
 }
 
 export async function reportCredit(demandId: number, resultType: 1 | 2 | 3, desc: string) {
-  return request<{}>('/api/v1/credit/report', { method: 'POST', body: JSON.stringify({ demandId, resultType, desc, evidenceImg: [] }) })
+  return request<{ completed?: boolean }>('/api/v1/credit/report', { method: 'POST', body: JSON.stringify({ demandId, resultType, desc, evidenceImg: [] }) })
 }
 
 export async function getStats() {
@@ -134,6 +149,7 @@ const normalizeDemandItem = (item: any): DemandItem => ({
   status: Number(item?.status ?? 0) as DemandStatus,
   createAt: item?.createAt ?? item?.create_time ?? '',
   expireTime: item?.expireTime ?? item?.expire_time ?? '',
+  offerCount: Number(item?.offerCount ?? item?.offer_count ?? 0),
   user: normalizeUser(item?.user),
 })
 
