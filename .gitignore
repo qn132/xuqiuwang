@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+
+# Preserve the former standalone repository metadata outside the merged tree.
+.git-standalone-backup/
